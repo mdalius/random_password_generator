@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG PHP_VERSION=8.5
-FROM php:${PHP_VERSION}-fpm-alpine
+FROM php:8.5-fpm-alpine
 
 RUN apk add --no-cache nginx \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
