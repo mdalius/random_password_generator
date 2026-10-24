@@ -1,7 +1,6 @@
 <?php
-include "random.php";
-#echo random_str(8)."\n";
-#echo random_str(10)."\n";
+require_once __DIR__ . '/random.php';
+header('Cache-Control: no-store');
 ?>
 <!DOCTYPE html>
 <html>
