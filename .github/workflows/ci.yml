@@ -44,17 +44,20 @@ jobs:
         run: php tools/check-coverage.php build/coverage.xml
 
   docker:
-    name: Build and test PHP ${{ matrix.php-version }} image
+    name: Build and test PHP 8.5 image (${{ matrix.arch }})
     runs-on: ubuntu-latest
     needs: unit_test
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.3', '8.4', '8.5']
+        arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm64
       - uses: docker/setup-buildx-action@v4
       - name: Build image
         uses: docker/build-push-action@v7
@@ -63,15 +66,15 @@ jobs:
           load: true
           push: false
           tags: password-generator:test
-          build-args: PHP_VERSION=${{ matrix.php-version }}
-          cache-from: type=gha,scope=php-${{ matrix.php-version }}
-          cache-to: type=gha,mode=max,scope=php-${{ matrix.php-version }}
+          platforms: linux/${{ matrix.arch }}
+          cache-from: type=gha,scope=php-8.5-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=php-8.5-${{ matrix.arch }}
       - name: Test running container
         shell: bash
         run: |
           set -euo pipefail
           trap 'docker logs password-generator; docker rm -f password-generator' EXIT
-          docker run -d --name password-generator -p 127.0.0.1:8080:8080 password-generator:test
+          docker run -d --platform linux/${{ matrix.arch }} --name password-generator -p 127.0.0.1:8080:8080 password-generator:test
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:8080/ -o /tmp/password-page.html; then
               break
@@ -105,19 +108,18 @@ jobs:
           docker image inspect password-generator:test --format 'Image size: {{.Size}} bytes'
 
   publish:
-    name: Publish PHP ${{ matrix.php-version }} image
+    name: Publish PHP 8.5 image (AMD64 and ARM64)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: docker
     environment: production
-    strategy:
-      fail-fast: false
-      matrix:
-        php-version: ['8.3', '8.4', '8.5']
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm64
       - uses: docker/setup-buildx-action@v4
       - name: Log in to Docker Hub
         uses: docker/login-action@v4
@@ -128,16 +130,13 @@ jobs:
         id: tags
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          PHP_VERSION: ${{ matrix.php-version }}
         run: |
           image="${DOCKER_HUB_USERNAME}/random-password-generator"
           {
             echo 'tags<<EOF'
-            echo "${image}:php${PHP_VERSION}"
-            echo "${image}:sha-${GITHUB_SHA}-php${PHP_VERSION}"
-            if [ "$PHP_VERSION" = '8.5' ]; then
-              echo "${image}:latest"
-            fi
+            echo "${image}:php8.5"
+            echo "${image}:sha-${GITHUB_SHA}-php8.5"
+            echo "${image}:latest"
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
       - name: Build and push image
@@ -146,6 +145,7 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.tags.outputs.tags }}
-          build-args: PHP_VERSION=${{ matrix.php-version }}
-          cache-from: type=gha,scope=php-${{ matrix.php-version }}
-          cache-to: type=gha,mode=max,scope=php-${{ matrix.php-version }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: |
+            type=gha,scope=php-8.5-amd64
+            type=gha,scope=php-8.5-arm64
