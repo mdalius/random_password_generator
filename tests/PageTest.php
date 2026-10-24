@@ -15,13 +15,21 @@ final class PageTest extends TestCase
             ob_end_clean();
         }
 
-        preg_match_all('/<td>([^<]*)<\/td>/', $html, $matches);
-        self::assertCount(72, $matches[1]);
-
+        $document = new DOMDocument();
+        $document->loadHTML($html);
+        $fields = $document->getElementsByTagName('textarea');
+        self::assertCount(6, $fields);
         $lengths = [6, 7, 8, 9, 18, 32];
-        foreach ($matches[1] as $index => $password) {
-            self::assertSame($lengths[$index % count($lengths)], strlen($password));
-            self::assertMatchesRegularExpression('/\A[0-9a-zA-Z]+\z/', $password);
+        foreach ($fields as $index => $field) {
+            self::assertTrue($field->hasAttribute('readonly'));
+            self::assertSame('off', $field->getAttribute('wrap'));
+            self::assertSame('passwords-' . $lengths[$index], $field->getAttribute('id'));
+            $passwords = explode("\n", $field->textContent);
+            self::assertCount(12, $passwords);
+            foreach ($passwords as $password) {
+                self::assertSame($lengths[$index], strlen($password));
+                self::assertMatchesRegularExpression('/\A[0-9a-zA-Z]+\z/', $password);
+            }
         }
     }
 }

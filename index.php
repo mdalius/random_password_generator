@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/random.php';
 header('Cache-Control: no-store');
+$lengths = [6, 7, 8, 9, 18, 32];
+$rowCount = 12;
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="lt">
 <head>
   <meta charset="UTF-8">
   <title>Randoms</title>
@@ -17,42 +19,52 @@ table, th, td {
 th, td {
     padding: 4px;
 }
+
+td {
+    vertical-align: top;
+}
+
+textarea {
+    display: block;
+    font-family: "Courier New", monospace;
+    line-height: 1.5;
+    resize: vertical;
+    white-space: pre;
+}
+
+button {
+    margin-top: 4px;
+}
 </style>
 
 </head>
 
 <body>
-  <table style="width:500px">
+  <p>Kiekviename lauke – atskiro stulpelio slaptažodžiai. Pažymėkite stulpelį ir spauskite Ctrl+C (Mac: ⌘C).</p>
+  <table>
 	<thead>
 	  <tr>
-        <th>6</th>
-        <th>7</th>
-        <th>8</th>
-        <th>9</th>
-        <th>18</th>
-        <th>32</th>
+        <?php foreach ($lengths as $length): ?>
+        <th scope="col"><label for="passwords-<?php echo $length; ?>"><?php echo $length; ?></label></th>
+        <?php endforeach; ?>
 	  </tr>
 	</thead>
 
 	<tbody>
 	  <tr>
-	    <td><?php echo random_str(6);?></td>
-	    <td><?php echo random_str(7);?></td>
-	    <td><?php echo random_str(8);?></td>
-	    <td><?php echo random_str(9);?></td>
-	    <td><?php echo random_str(18);?></td>
-	    <td><?php echo random_str(32);?></td>
+        <?php foreach ($lengths as $length): ?>
+        <?php
+        $passwords = [];
+        for ($row = 0; $row < $rowCount; ++$row) {
+            $passwords[] = random_str($length);
+        }
+        ?>
+        <td>
+          <textarea id="passwords-<?php echo $length; ?>" name="passwords-<?php echo $length; ?>" rows="<?php echo $rowCount; ?>" cols="<?php echo $length; ?>" readonly wrap="off" spellcheck="false" autocomplete="off"><?php echo htmlspecialchars(implode("\n", $passwords), ENT_QUOTES, 'UTF-8'); ?></textarea>
+          <button type="button" onclick="this.previousElementSibling.focus(); this.previousElementSibling.select();" aria-controls="passwords-<?php echo $length; ?>">Pažymėti stulpelį</button>
+        </td>
+        <?php endforeach; ?>
 	  </tr>
-	  <?php for ($l = 0; $l <= 10; $l++) {
-		echo "<tr>";
-		echo "<td>".random_str(6)."</td>";
-		echo "<td>".random_str(7)."</td>";
-		echo "<td>".random_str(8)."</td>";
-		echo "<td>".random_str(9)."</td>";
-		echo "<td>".random_str(18)."</td>";
-		echo "<td>".random_str(32)."</td>";
-		echo "</tr>";
-		} ?>
 	</tbody>
   </table>
 

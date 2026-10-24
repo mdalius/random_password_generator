@@ -80,15 +80,19 @@ jobs:
           grep -qi '^Cache-Control: no-store' /tmp/password-headers
           python3 - <<'PY'
           import re
+          from html import unescape
           from pathlib import Path
 
           html = Path('/tmp/password-page.html').read_text()
-          passwords = re.findall(r'<td>([^<]*)</td>', html)
+          columns = re.findall(r'<textarea\b[^>]*>(.*?)</textarea>', html, re.S)
           lengths = [6, 7, 8, 9, 18, 32]
-          assert len(passwords) == 72, f'Expected 72 passwords, got {len(passwords)}'
-          for index, password in enumerate(passwords):
-              assert len(password) == lengths[index % len(lengths)]
-              assert re.fullmatch(r'[0-9a-zA-Z]+', password)
+          assert len(columns) == 6, f'Expected 6 columns, got {len(columns)}'
+          for length, column in zip(lengths, columns):
+              passwords = unescape(column).splitlines()
+              assert len(passwords) == 12
+              for password in passwords:
+                  assert len(password) == length
+                  assert re.fullmatch(r'[0-9a-zA-Z]+', password)
           PY
           curl --fail --silent http://127.0.0.1:8080/index.php -o /dev/null
           for path in random.php phpunit.xml .git/config; do
