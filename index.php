@@ -5,10 +5,10 @@ $lengths = [6, 7, 8, 9, 18, 32];
 $rowCount = 12;
 ?>
 <!DOCTYPE html>
-<html lang="lt">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Randoms</title>
+  <title>Random Password Generator</title>
 <style>
 table, th, td {
     border: 1px solid black;
@@ -40,7 +40,7 @@ button {
 </head>
 
 <body>
-  <p>Kiekviename lauke – atskiro stulpelio slaptažodžiai. Pažymėkite stulpelį ir spauskite Ctrl+C (Mac: ⌘C).</p>
+  <p>Each field contains one column of passwords. Select a column and copy.</p>
   <table>
 	<thead>
 	  <tr>
@@ -61,7 +61,7 @@ button {
         ?>
         <td>
           <textarea id="passwords-<?php echo $length; ?>" name="passwords-<?php echo $length; ?>" rows="<?php echo $rowCount; ?>" cols="<?php echo $length; ?>" readonly wrap="off" spellcheck="false" autocomplete="off"><?php echo htmlspecialchars(implode("\n", $passwords), ENT_QUOTES, 'UTF-8'); ?></textarea>
-          <button type="button" onclick="this.previousElementSibling.focus(); this.previousElementSibling.select();" aria-controls="passwords-<?php echo $length; ?>">Pažymėti stulpelį</button>
+          <button type="button" onclick="this.previousElementSibling.focus(); this.previousElementSibling.select();" aria-controls="passwords-<?php echo $length; ?>">Select column</button>
         </td>
         <?php endforeach; ?>
 	  </tr>
